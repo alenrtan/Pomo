@@ -20,6 +20,7 @@ kotlin {
                 implementation(compose.components.uiToolingPreview)
                 implementation(libs.androidx.lifecycle.viewmodel)
                 implementation(libs.androidx.lifecycle.runtime.compose)
+                implementation("org.jetbrains.compose.ui:ui-tooling-preview")
             }
         }
 
@@ -27,6 +28,7 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutines.swing)
+                implementation("org.jetbrains.compose.ui:ui-tooling-preview")
             }
         }
     }
