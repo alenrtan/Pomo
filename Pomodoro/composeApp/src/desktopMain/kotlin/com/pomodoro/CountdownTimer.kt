@@ -3,14 +3,13 @@ package com.pomodoro
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +19,9 @@ import kotlinx.coroutines.flow.asStateFlow
 fun CountdownTimer() {
     MaterialTheme {
         var showContent by remember { mutableStateOf(false) }
-        val timer = remember {Timer(10)} // hardcoded; replace with user-defined (in seconds for now)
         var isRunning by remember { mutableStateOf(false) }
+        var inputTime by remember { mutableStateOf("15")} // default value in minutes
+        val timer = remember {Timer(inputTime.toInt() * 60)}
 
         // timer countdown
         LaunchedEffect(isRunning) {
@@ -52,13 +52,39 @@ fun CountdownTimer() {
                         }
                         isRunning = !isRunning
                     }) {
-                    Text(if(isRunning) "Stop Timer" else "Start Timer") // text for the button
+                    Text(if(isRunning) "Stop Timer" else "Set Timer") // text for the button
                 }
                 AnimatedVisibility(showContent){
                     Column( modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally) {
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // allow the user to define timer
+                        TextField(
+                            value = inputTime,
+                            onValueChange = { input ->
+                                // input validation
+                                val trimmedInput = input.trim().replace("\n", "")
+                                if (trimmedInput.isNotEmpty() && trimmedInput.all { it.isDigit() }) {
+                                    inputTime = trimmedInput // Only update if valid
+                                }
+                            },
+                            label = { Text("Enter time in Minutes") },
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.width(200.dp)
+                        )
+
+                        Button(onClick = {
+                            if (inputTime.isNotBlank() || inputTime.isNotEmpty()){
+                                timer.resetTimer(inputTime.toInt() * 60)
+                                isRunning = true
+                            }
+                        }){
+                            Text("Set Time")
+                        }
+
+                        // showing the remaining time
                         val timeLeft by timer.timeFlow.collectAsState()
                         if (timeLeft > 0){
                             Text("Remaining time: ${formatTime(timeLeft)}")
@@ -119,7 +145,7 @@ class Timer(startTime: Int) {
 
 // function to help show time correctly from milli
 fun formatTime(seconds: Int): String {
-    val remainingMinutes = seconds/60
-    val remainingSeconds = seconds%60
-    return String.format("%02d : %02d", remainingMinutes, remainingSeconds)
+    val minutes = seconds / 60
+    val remainingSeconds = seconds % 60
+    return String.format("%02d:%02d", minutes, remainingSeconds);
 } //end formatTime
